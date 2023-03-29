@@ -1,0 +1,17 @@
+# Object files
+*.o
+
+# Executables
+*.out
+
+# Debug files
+*.dSYM/
+*.swp
+*~
+
+# IDE files
+.vscode/
+*.code-workspace
+
+# python files
+*.py
