@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 
 // Print memory
 void print_memory(uint8_t memory[], unsigned int size);
@@ -55,7 +56,7 @@ int main() {
     assert(memory[0x0e] == 253 && memory[0x0f] == 0);
     print_memory(memory, memory_size);
 
-    printf("OK");
+    printf("OK\n");
 
 }
 
@@ -71,6 +72,71 @@ void compute(uint8_t memory[], unsigned int size) {
     INSTRUCTIONS ---------------------------^ OUT-^ IN-1^ IN-2^
     */
 
+    // Op codes
+    const uint16_t LOAD = 0x01;
+    const uint16_t STORE = 0x02;
+    const uint16_t ADD = 0x03;
+    const uint16_t SUB = 0x04;
+    const uint16_t HALT = 0xFF;
+
+    uint16_t registers[3] = { 0x00, 0x00, 0x00 }; // PC, R1, and R2
+
+    while (true) {
+        uint16_t program_counter = registers[0];
+        // TODO: fetch the next instruction from memory
+        uint8_t op = memory[program_counter];
+        switch (op) {
+            case LOAD: {
+                uint8_t second_operand = memory[program_counter + 1]; // register address to put value in
+                uint8_t third_operand = memory[program_counter + 2]; // input address to get value
+
+                // Input is litte endian
+                uint8_t lower_byte = memory[third_operand];
+                uint8_t upper_byte = memory[third_operand + 1];
+
+                uint16_t input16 = lower_byte + upper_byte * 256;
+
+                registers[second_operand] = input16;
+
+                registers[0] += 3;
+                break;
+            }
+            case STORE: {
+                uint8_t second_operand = memory[program_counter + 1]; // register address
+                uint8_t third_operand = memory[program_counter + 2]; // output address
+
+                // Output is litte endian
+                uint8_t lower_byte = registers[second_operand] % 256;
+                uint8_t upper_byte = registers[second_operand] / 256;
+
+                memory[third_operand] = lower_byte;
+                memory[third_operand + 1] = upper_byte;
+
+                registers[0] += 3;
+                break;
+            }
+            case ADD: {
+                uint8_t second_operand = memory[program_counter + 1];
+                uint8_t third_operand = memory[program_counter + 2];
+
+                registers[second_operand] = registers[second_operand] + registers[third_operand];
+
+                registers[0] += 3;
+                break;
+            }
+            case SUB: {
+                uint8_t second_operand = memory[program_counter + 1];
+                uint8_t third_operand = memory[program_counter + 2];
+
+                registers[second_operand] = registers[second_operand] - registers[third_operand];
+                
+                registers[0] += 3;
+                break;
+            }
+            case HALT:
+                return;
+        }
+    }
     return;
 }
 
