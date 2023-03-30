@@ -11,106 +11,120 @@ void load_program(uint8_t memory[], uint8_t program[], unsigned int size);
 // Virtual machine cpu simulation
 void compute(uint8_t memory[], unsigned int size);
 
+// Op codes
+#define LOAD 0x01
+#define STORE 0x02
+#define ADD 0x03
+#define SUB 0x04
+#define ADDI 0x05
+#define SUBI 0x06
+#define JUMP 0x07
+#define BEQ 0x08 // Branch if two register are equal
+#define BEQZ 0x09 // Branch if register A equal 0
+#define HALT 0xFF
+
+// Use offset to calculate the memory address of input, output for extendbility of memory
+#define MEMORY_SIZE 50
+#define REGISTER_A 0x01
+#define REGISTER_B 0x02
+#define INPUT_1 (MEMORY_SIZE - 4)
+#define INPUT_2 (MEMORY_SIZE - 2)
+#define OUTPUT_1 (MEMORY_SIZE - 6)
+
 int main() {
     // Simulate a memory with replacable value
-    const unsigned int memory_size = 20;
-    uint8_t memory[memory_size];
+    uint8_t memory[MEMORY_SIZE];
 
-    memset(memory, 0, memory_size);
+    memset(memory, 0, MEMORY_SIZE);
 
     // 255 + 3 = 258
-    uint8_t program_1[memory_size] = {
-        0x01, 0x01, 0x10,  // 0x00: load A 0x10
-        0x01, 0x02, 0x12,  // 0x03: load B 0x12
-        0x03, 0x01, 0x02,  // 0x06: add A B
-        0x02, 0x01, 0x0e,  // 0x09: store A 0x0e
-        0xff,              // 0x0c: halt
-        0x00,              // 0x0d: <<unused>>
-        0x00, 0x00,        // 0x0e: output
-        0xff, 0x00,        // 0x10: input X = 255
-        0x03, 0x00         // 0x12: input Y = 3
+    uint8_t program_1[MEMORY_SIZE] = {
+        LOAD, REGISTER_A, INPUT_1,      // 0x00: load A 0x10
+        LOAD, REGISTER_B, INPUT_2,      // 0x03: load B 0x12
+        ADD, REGISTER_A, REGISTER_B,    // 0x06: add A B
+        STORE, REGISTER_A, OUTPUT_1,    // 0x09: store A 0x0e
+        HALT,                           // 0x0c: halt
     };
+    program_1[INPUT_1] = 0xff;
+    program_1[INPUT_1 + 1] = 0x00;
+    program_1[INPUT_2] = 0x03;
+    program_1[INPUT_2 + 1] = 0x00;
 
-    load_program(memory, program_1, memory_size);
-    compute(memory, memory_size);
+    load_program(memory, program_1, MEMORY_SIZE);
+    compute(memory, MEMORY_SIZE);
     printf("> Testing 255 + 3 = 258\n");
-    assert(memory[0x0e] == 2 && memory[0x0f] == 1);
-    print_memory(memory, memory_size);
+    assert(memory[OUTPUT_1] == 2 && memory[OUTPUT_1 + 1] == 1);
+    print_memory(memory, MEMORY_SIZE);
 
     // TODO: Test negative number
     // 256 - 3 = 253
-    uint8_t program_2[memory_size] = {
-        0x01, 0x01, 0x10,  // 0x00: load A 0x10
-        0x01, 0x02, 0x12,  // 0x03: load B 0x12
-        0x04, 0x01, 0x02,  // 0x06: sub A B
-        0x02, 0x01, 0x0e,  // 0x09: store A 0x0e
-        0xff,              // 0x0c: halt
-        0x00,              // 0x0d: <<unused>>
-        0x00, 0x00,        // 0x0e: output
-        0x00, 0x01,        // 0x10: input X = 256
-        0x03, 0x00         // 0x12: input Y = 3
+    uint8_t program_2[MEMORY_SIZE] = {
+        LOAD, REGISTER_A, INPUT_1,      // 0x00: load A 0x10
+        LOAD, REGISTER_B, INPUT_2,      // 0x03: load B 0x12
+        SUB, REGISTER_A, REGISTER_B,    // 0x06: sub A B
+        STORE, REGISTER_A, OUTPUT_1,    // 0x09: store A 0x0e
+        HALT,                           // 0x0c: halt
     };
+    program_2[INPUT_1] = 0x00;
+    program_2[INPUT_1 + 1] = 0x01;
+    program_2[INPUT_2] = 0x03;
+    program_2[INPUT_2 + 1] = 0x00;
 
-    load_program(memory, program_2, memory_size);
-    compute(memory, memory_size);
+    load_program(memory, program_2, MEMORY_SIZE);
+    compute(memory, MEMORY_SIZE);
     printf("> Testing 256 - 3 = 253\n");
-    assert(memory[0x0e] == 253 && memory[0x0f] == 0);
-    print_memory(memory, memory_size);
+    assert(memory[OUTPUT_1] == 253 && memory[OUTPUT_1 + 1] == 0);
+    print_memory(memory, MEMORY_SIZE);
 
     // 300++ = 301
-    uint8_t program_3[memory_size] = {
-        0x01, 0x01, 0x10,               // 0x00: load A 0x10
-        0x05, 0x01,                     // 0x03: addi A
-        0x02, 0x01, 0x0e,               // 0x05: store A 0x0e
-        0xff,                           // 0x08: halt
-        0x00, 0x00, 0x00, 0x00, 0x00,   // 0x09: <<unused>>
-        0x00, 0x00,                     // 0x0e: output
-        0x2c, 0x01,                     // 0x10: input X = 300
-        0x00, 0x00                      // 0x12: <<unused>>
+    uint8_t program_3[MEMORY_SIZE] = {
+        LOAD, REGISTER_A, INPUT_1,            // 0x00: load A 0x10
+        ADDI, REGISTER_A,                     // 0x03: addi A
+        STORE, REGISTER_A, OUTPUT_1,          // 0x05: store A 0x0e
+        HALT,                                 // 0x08: halt
     };
+    program_3[INPUT_1] = 0x2c;
+    program_3[INPUT_1 + 1] = 0x01;
 
-    load_program(memory, program_3, memory_size);
-    compute(memory, memory_size);
+    load_program(memory, program_3, MEMORY_SIZE);
+    compute(memory, MEMORY_SIZE);
     printf("> Testing 300++ = 301\n");
-    assert(memory[0x0e] == 45 && memory[0x0f] == 1);
-    print_memory(memory, memory_size);
+    assert(memory[OUTPUT_1] == 45 && memory[OUTPUT_1 + 1] == 1);
+    print_memory(memory, MEMORY_SIZE);
 
     // 300-- = 299
-    uint8_t program_4[memory_size] = {
-        0x01, 0x01, 0x10,               // 0x00: load A 0x10
-        0x06, 0x01,                     // 0x03: subi A
-        0x02, 0x01, 0x0e,               // 0x05: store A 0x0e
-        0xff,                           // 0x08: halt
-        0x00, 0x00, 0x00, 0x00, 0x00,   // 0x09: <<unused>>
-        0x00, 0x00,                     // 0x0e: output
-        0x2c, 0x01,                     // 0x10: input X = 300
-        0x00, 0x00                      // 0x12: <<unused>>
+    uint8_t program_4[MEMORY_SIZE] = {
+        LOAD, REGISTER_A, INPUT_1,            // 0x00: load A 0x10
+        SUBI, REGISTER_A,                     // 0x03: subi A
+        STORE, REGISTER_A, OUTPUT_1,          // 0x05: store A 0x0e
+        HALT,                                 // 0x08: halt
     };
+    program_4[INPUT_1] = 0x2c;
+    program_4[INPUT_1 + 1] = 0x01;
 
-    load_program(memory, program_4, memory_size);
-    compute(memory, memory_size);
+    load_program(memory, program_4, MEMORY_SIZE);
+    compute(memory, MEMORY_SIZE);
     printf("> Testing 300-- = 299\n");
-    assert(memory[0x0e] == 43 && memory[0x0f] == 1);
-    print_memory(memory, memory_size);
+    assert(memory[OUTPUT_1] == 43 && memory[OUTPUT_1 + 1] == 1);
+    print_memory(memory, MEMORY_SIZE);
 
     // skip some code (do nothing)
-    uint8_t program_5[memory_size] = {
-        0x02, 0x01, 0x0e,               // 0x00: store A 0x0e
-        0x07, 0x0a,                     // 0x03: jump halt
-        0x06, 0x01,                     // 0x05: subi A
-        0x02, 0x01, 0x0e,               // 0x07: store A 0x0e
-        0xff,                           // 0x0a: halt
-        0x00, 0x00, 0x00,               // 0x0b: <<unused>>
-        0x11, 0x12,                     // 0x0e: output <<junk>>
-        0x00, 0x00,                     // 0x10: input <<unused>>
-        0x00, 0x00                      // 0x12: <<unused>>
+    uint8_t program_5[MEMORY_SIZE] = {
+        STORE, REGISTER_A, OUTPUT_1,         // 0x00: store A 0x0e
+        JUMP, 0x0a,                          // 0x03: jump halt
+        SUBI, REGISTER_A,                    // 0x05: subi A
+        STORE, REGISTER_A, OUTPUT_1,         // 0x07: store A 0x0e
+        HALT,                                // 0x0a: halt
     };
+    program_5[OUTPUT_1] = 0x11;
+    program_5[OUTPUT_1 + 1] = 0x12;
 
-    load_program(memory, program_5, memory_size);
-    compute(memory, memory_size);
+    load_program(memory, program_5, MEMORY_SIZE);
+    compute(memory, MEMORY_SIZE);
     printf("> Testing JUMP\n");
-    assert(memory[0x0e] == 0x00 && memory[0x0f] == 0x00);
-    print_memory(memory, memory_size);
+    print_memory(memory, MEMORY_SIZE);
+    assert(memory[OUTPUT_1] == 0x00 && memory[OUTPUT_1 + 1] == 0x00);
+    print_memory(memory, MEMORY_SIZE);
 
     // TODO: Need to wait until memory is larger to fit more instruction
     // uint8_t program_6[memory_size] = {
@@ -147,27 +161,12 @@ int main() {
 
 void compute(uint8_t memory[], unsigned int size) {
     /*
-    Given a list representing a 20 "byte" array of memory, run the stored
-    program to completion, mutating the list in place.
-
     The memory format is:
 
-    00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13
-    __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __
-    INSTRUCTIONS ---------------------------^ OUT-^ IN-1^ IN-2^
+    00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 30 31
+    __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __
+    INSTRUCTIONS ---------------------------------------------------------------------------------------------------------------------^ OUT-^ IN-1^ IN-2^
     */
-
-    // Op codes
-    const uint16_t LOAD = 0x01;
-    const uint16_t STORE = 0x02;
-    const uint16_t ADD = 0x03;
-    const uint16_t SUB = 0x04;
-    const uint16_t ADDI = 0x05;
-    const uint16_t SUBI = 0x06;
-    const uint16_t JUMP = 0x07;
-    const uint16_t BEQ = 0x08; // Branch if two register are equal
-    const uint16_t BEQZ = 0x09; // Branch if register A equal 0
-    const uint16_t HALT = 0xFF;
 
     uint16_t registers[3] = { 0x00, 0x00, 0x00 }; // PC, R1, and R2
 
@@ -255,7 +254,7 @@ void compute(uint8_t memory[], unsigned int size) {
 }
 
 void print_memory(uint8_t memory[], unsigned int size) {
-    printf("--------------------------memory---------------------------\n");
+    printf("-----------------------------------------------------------------------memory------------------------------------------------------------------------\n");
     for (int i = 0; i < size; i++) {
         printf("%02x ", i);
     }
@@ -264,7 +263,7 @@ void print_memory(uint8_t memory[], unsigned int size) {
         printf("%02x ", memory[i]);
     }
     printf("\n");
-    printf("INSTRUCTIONS ---------------------------^ OUT-^ IN-1^ IN-2^\n");
+    printf("INSTRUCTIONS ---------------------------------------------------------------------------------------------------------------------^ OUT-^ IN-1^ IN-2^\n");
 }
 
 void load_program(uint8_t memory[], uint8_t program[], unsigned int size) {
