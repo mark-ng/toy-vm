@@ -19,7 +19,7 @@ void compute(uint8_t memory[], unsigned int size);
 #define ADDI 0x05
 #define SUBI 0x06
 #define JUMP 0x07
-#define BEQ 0x08 // Branch if two register are equal
+#define BEQ 0x08  // Branch if two register are equal
 #define BEQZ 0x09 // Branch if register A equal 0
 #define HALT 0xFF
 
@@ -232,6 +232,18 @@ void compute(uint8_t memory[], unsigned int size) {
                     *pc = memory_addr;
                 } else {
                     *pc += 2;
+                }
+                break;
+            }
+            case BEQ: {
+                uint8_t register_1_addr = memory[*pc + 1];
+                uint8_t register_2_addr = memory[*pc + 2];
+                uint8_t memory_addr = memory[*pc + 3];
+
+                if (registers[register_1_addr] == registers[register_2_addr]) {
+                    *pc = memory_addr;
+                } else {
+                    *pc += 4;
                 }
                 break;
             }
