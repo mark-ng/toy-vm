@@ -144,6 +144,10 @@ void compute(uint8_t memory[], unsigned int size) {
                 break;
             }
             case ADDI: {
+                uint8_t register_1_addr = memory[*pc + 1];
+
+                registers[register_1_addr]++;
+
                 *pc += 2;
                 break;
             }
