@@ -27,6 +27,8 @@ void compute(uint8_t memory[], unsigned int size);
 #define MEMORY_SIZE 50
 #define REGISTER_A 0x01
 #define REGISTER_B 0x02
+#define REGISTER_C 0x03
+#define REGISTER_D 0x04
 #define INPUT_1 (MEMORY_SIZE - 4)
 #define INPUT_2 (MEMORY_SIZE - 2)
 #define OUTPUT_1 (MEMORY_SIZE - 6)
@@ -155,7 +157,7 @@ void compute(uint8_t memory[], unsigned int size) {
     INSTRUCTIONS ---------------------------------------------------------------------------------------------------------------------^ OUT-^ IN-1^ IN-2^
     */
 
-    uint16_t registers[3] = { 0x00, 0x00, 0x00 }; // PC, R1, and R2
+    uint16_t registers[5] = { 0x00, 0x00, 0x00, 0x00, 0x00 }; // PC, R1, and R2, R3, R4
 
     uint16_t* pc = &registers[0];
 
