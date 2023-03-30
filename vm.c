@@ -13,13 +13,13 @@ void compute(uint8_t memory[], unsigned int size);
 
 int main() {
     // Simulate a memory with replacable value
-    unsigned int memory_size = 20;
+    const unsigned int memory_size = 20;
     uint8_t memory[memory_size];
 
-    memset(memory, 0, 20);
+    memset(memory, 0, memory_size);
 
     // 255 + 3 = 258
-    uint8_t program_1[20] = {
+    uint8_t program_1[memory_size] = {
         0x01, 0x01, 0x10,  // 0x00: load A 0x10
         0x01, 0x02, 0x12,  // 0x03: load B 0x12
         0x03, 0x01, 0x02,  // 0x06: add A B
@@ -37,8 +37,9 @@ int main() {
     assert(memory[0x0e] == 2 && memory[0x0f] == 1);
     print_memory(memory, memory_size);
 
+    // TODO: Test negative number
     // 256 - 3 = 253
-    uint8_t program_2[20] = {
+    uint8_t program_2[memory_size] = {
         0x01, 0x01, 0x10,  // 0x00: load A 0x10
         0x01, 0x02, 0x12,  // 0x03: load B 0x12
         0x04, 0x01, 0x02,  // 0x06: sub A B
@@ -57,7 +58,7 @@ int main() {
     print_memory(memory, memory_size);
 
     // 300++ = 301
-    uint8_t program_3[20] = {
+    uint8_t program_3[memory_size] = {
         0x01, 0x01, 0x10,               // 0x00: load A 0x10
         0x05, 0x01,                     // 0x03: addi A
         0x02, 0x01, 0x0e,               // 0x05: store A 0x0e
@@ -75,7 +76,7 @@ int main() {
     print_memory(memory, memory_size);
 
     // 300-- = 299
-    uint8_t program_4[20] = {
+    uint8_t program_4[memory_size] = {
         0x01, 0x01, 0x10,               // 0x00: load A 0x10
         0x06, 0x01,                     // 0x03: subi A
         0x02, 0x01, 0x0e,               // 0x05: store A 0x0e
@@ -90,6 +91,25 @@ int main() {
     compute(memory, memory_size);
     printf("> Testing 300-- = 299\n");
     assert(memory[0x0e] == 43 && memory[0x0f] == 1);
+    print_memory(memory, memory_size);
+
+    // skip some code (do nothing)
+    uint8_t program_5[memory_size] = {
+        0x02, 0x01, 0x0e,               // 0x00: store A 0x0e
+        0x07, 0x0a,                     // 0x03: jump halt
+        0x06, 0x01,                     // 0x05: subi A
+        0x02, 0x01, 0x0e,               // 0x07: store A 0x0e
+        0xff,                           // 0x0a: halt
+        0x00, 0x00, 0x00,               // 0x0b: <<unused>>
+        0x11, 0x12,                     // 0x0e: output <<junk>>
+        0x00, 0x00,                     // 0x10: input <<unused>>
+        0x00, 0x00                      // 0x12: <<unused>>
+    };
+
+    load_program(memory, program_5, memory_size);
+    compute(memory, memory_size);
+    printf("> Testing JUMP\n");
+    assert(memory[0x0e] == 0x00 && memory[0x0f] == 0x00);
     print_memory(memory, memory_size);
 
     printf("OK\n");
@@ -114,6 +134,9 @@ void compute(uint8_t memory[], unsigned int size) {
     const uint16_t SUB = 0x04;
     const uint16_t ADDI = 0x05;
     const uint16_t SUBI = 0x06;
+    const uint16_t JUMP = 0x07;
+    const uint16_t BEQ = 0x08; // Branch if two register are equal
+    const uint16_t BEQZ = 0x09; // Branch if register A equal 0
     const uint16_t HALT = 0xFF;
 
     uint16_t registers[3] = { 0x00, 0x00, 0x00 }; // PC, R1, and R2
@@ -176,6 +199,12 @@ void compute(uint8_t memory[], unsigned int size) {
                 registers[register_1_addr]--;
 
                 *pc += 2;
+                break;
+            }
+            case JUMP: {
+                uint8_t memory_addr = memory[*pc + 1];
+
+                *pc = memory_addr;
                 break;
             }
             case HALT:
