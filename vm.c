@@ -56,8 +56,25 @@ int main() {
     assert(memory[0x0e] == 253 && memory[0x0f] == 0);
     print_memory(memory, memory_size);
 
-    printf("OK\n");
+    // 300++ = 301
+    uint8_t program_3[20] = {
+        0x01, 0x01, 0x10,               // 0x00: load A 0x10
+        0x05, 0x01,                     // 0x03: addi A
+        0x02, 0x01, 0x0e,               // 0x05: store A 0x0e
+        0xff,                           // 0x08: halt
+        0x00, 0x00, 0x00, 0x00, 0x00,   // 0x09: <<unused>>
+        0x00, 0x00,                     // 0x0e: output
+        0x2c, 0x01,                     // 0x10: input X = 300
+        0x01, 0x00                      // 0x12: input Y = 1
+    };
 
+    load_program(memory, program_3, memory_size);
+    compute(memory, memory_size);
+    printf("> Testing 300++ = 301\n");
+    assert(memory[0x0e] == 45 && memory[0x0f] == 1);
+    print_memory(memory, memory_size);
+
+    printf("OK\n");
 }
 
 void compute(uint8_t memory[], unsigned int size) {
@@ -77,6 +94,7 @@ void compute(uint8_t memory[], unsigned int size) {
     const uint16_t STORE = 0x02;
     const uint16_t ADD = 0x03;
     const uint16_t SUB = 0x04;
+    const uint16_t ADDI = 0x05;
     const uint16_t HALT = 0xFF;
 
     uint16_t registers[3] = { 0x00, 0x00, 0x00 }; // PC, R1, and R2
@@ -123,6 +141,10 @@ void compute(uint8_t memory[], unsigned int size) {
                 registers[register_1_addr] = registers[register_1_addr] - registers[register_2_addr];
                 
                 *pc += 3;
+                break;
+            }
+            case ADDI: {
+                *pc += 2;
                 break;
             }
             case HALT:
