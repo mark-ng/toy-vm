@@ -126,35 +126,22 @@ int main() {
     assert(memory[OUTPUT_1] == 0x00 && memory[OUTPUT_1 + 1] == 0x00);
     print_memory(memory, MEMORY_SIZE);
 
-    // TODO: Need to wait until memory is larger to fit more instruction
-    // uint8_t program_6[memory_size] = {
-    //     /*
-    //         add from 0 to 10/
-    //         first input is set to 10/
-    //         store first input in register A/
-    //         loop: add to register B the value in register A
-    //         subi register A/
-    //         beqz (jump to an halt memory address if register A is equal 0) /
-    //         jump to loop
-    //         halt
-    //     */
-    //     0x01, 0x01, 0x10,               // 0x00: load A 0x10
-    //     0x03, 0x02, 0x01,               // 0x03: add B A
-    //     0x06, 0x01,                     // 0x06: subi A
-    //     0x09, 0x0c,                     // 0x08: jump to halt if register A is zero
-    //     0x07, 0x03,                     // 0x0a: jump back to loop start
-    //     0x02, 0x02, 0x0e,               // store register b to output
-    //     0xff,                           // 0x0c: halt
-    //     0x00, 0x00,                     // 0x0e: output 0
-    //     0x0a, 0x00,                     // 0x10: input1 10
-    //     0x00, 0x00                      // 0x12: input2 <<unused>>
-    // };
+    uint8_t program_6[MEMORY_SIZE] = {
+        LOAD, REGISTER_A, INPUT_1,               // 0x00: load A 0x10
+        ADD, REGISTER_B, REGISTER_A,             // 0x03: add B A
+        SUBI, REGISTER_A,                        // 0x06: subi A
+        BEQZ, 0x0c,                              // 0x08: jump to output result if register A is zero
+        JUMP, 0x03,                              // 0x0a: jump back to loop start
+        STORE, REGISTER_B, OUTPUT_1,             // 0x0c: store register b to output
+        HALT,                                    // 0x0f: halt
+    };
+    program_6[INPUT_1] = 0x0a;
 
-    // load_program(memory, program_6, memory_size);
-    // compute(memory, memory_size);
-    // printf("> Testing JUMP\n");
-    // assert(memory[0x0e] == 0x00 && memory[0x0f] == 0x00);
-    // print_memory(memory, memory_size);
+    load_program(memory, program_6, MEMORY_SIZE);
+    compute(memory, MEMORY_SIZE);
+    printf("> Testing JUMP\n");
+    assert(memory[OUTPUT_1] == 0x37 && memory[OUTPUT_1 + 1] == 0x00);
+    print_memory(memory, MEMORY_SIZE);
 
     printf("OK\n");
 }
