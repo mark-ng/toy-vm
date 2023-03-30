@@ -33,9 +33,9 @@ int main() {
 
     load_program(memory, program_1, memory_size);
     compute(memory, memory_size);
-    printf("Testing 255 + 3 = 258\n");
+    printf("> Testing 255 + 3 = 258\n");
     assert(memory[0x0e] == 2 && memory[0x0f] == 1);
-    print_memory(program_1, memory_size);
+    print_memory(memory, memory_size);
 
     // 256 - 3 = 253
     uint8_t program_2[20] = {
@@ -52,7 +52,7 @@ int main() {
 
     load_program(memory, program_2, memory_size);
     compute(memory, memory_size);
-    printf("Testing 256 - 3 = 253\n");
+    printf("> Testing 256 - 3 = 253\n");
     assert(memory[0x0e] == 253 && memory[0x0f] == 0);
     print_memory(memory, memory_size);
 
@@ -141,13 +141,16 @@ void compute(uint8_t memory[], unsigned int size) {
 }
 
 void print_memory(uint8_t memory[], unsigned int size) {
-    printf("|============|\n");
-    printf("|   MEMORY   |\n");
-    printf("|============|\n");
+    printf("--------------------------memory---------------------------\n");
     for (int i = 0; i < size; i++) {
-        printf("|0x%02x:\t 0x%02x|\n", i, memory[i]);
+        printf("%02x ", i);
     }
-    printf("|============|\n");
+    printf("\n");
+    for (int i = 0; i < size; i++) {
+        printf("%02x ",memory[i]);
+    }
+    printf("\n");
+    printf("INSTRUCTIONS ---------------------------^ OUT-^ IN-1^ IN-2^\n");
 }
 
 void load_program(uint8_t memory[], uint8_t program[], unsigned int size) {
