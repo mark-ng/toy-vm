@@ -81,56 +81,48 @@ void compute(uint8_t memory[], unsigned int size) {
 
     uint16_t registers[3] = { 0x00, 0x00, 0x00 }; // PC, R1, and R2
 
+    uint16_t* pc = &registers[0];
+
     while (true) {
-        uint16_t program_counter = registers[0];
-        // TODO: fetch the next instruction from memory
-        uint8_t op = memory[program_counter];
+        uint8_t op = memory[*pc];
         switch (op) {
             case LOAD: {
-                uint8_t second_operand = memory[program_counter + 1]; // register address to put value in
-                uint8_t third_operand = memory[program_counter + 2]; // input address to get value
+                uint8_t register_addr = memory[*pc + 1]; // register address to put value in
+                uint8_t memory_input_addr = memory[*pc + 2]; // input address to get value
 
-                // Input is litte endian
-                uint8_t lower_byte = memory[third_operand];
-                uint8_t upper_byte = memory[third_operand + 1];
+                // Input is 2 byte litte endian
+                registers[register_addr] = memory[memory_input_addr + 1] << 8 | memory[memory_input_addr];
 
-                uint16_t input16 = lower_byte + upper_byte * 256;
-
-                registers[second_operand] = input16;
-
-                registers[0] += 3;
+                *pc += 3;
                 break;
             }
             case STORE: {
-                uint8_t second_operand = memory[program_counter + 1]; // register address
-                uint8_t third_operand = memory[program_counter + 2]; // output address
+                uint8_t register_addr = memory[*pc + 1]; // register address
+                uint8_t memory_output_addr = memory[*pc + 2]; // output address
 
-                // Output is litte endian
-                uint8_t lower_byte = registers[second_operand] % 256;
-                uint8_t upper_byte = registers[second_operand] / 256;
+                // Output is 2 byte litte endian
+                memory[memory_output_addr] = registers[register_addr] & 0xFF;
+                memory[memory_output_addr + 1] = registers[register_addr] >> 8;
 
-                memory[third_operand] = lower_byte;
-                memory[third_operand + 1] = upper_byte;
-
-                registers[0] += 3;
+                *pc += 3;
                 break;
             }
             case ADD: {
-                uint8_t second_operand = memory[program_counter + 1];
-                uint8_t third_operand = memory[program_counter + 2];
+                uint8_t register_1_addr = memory[*pc + 1];
+                uint8_t register_2_addr = memory[*pc + 2];
 
-                registers[second_operand] = registers[second_operand] + registers[third_operand];
+                registers[register_1_addr] = registers[register_1_addr] + registers[register_2_addr];
 
-                registers[0] += 3;
+                *pc += 3;
                 break;
             }
             case SUB: {
-                uint8_t second_operand = memory[program_counter + 1];
-                uint8_t third_operand = memory[program_counter + 2];
+                uint8_t register_1_addr = memory[*pc + 1];
+                uint8_t register_2_addr = memory[*pc + 2];
 
-                registers[second_operand] = registers[second_operand] - registers[third_operand];
+                registers[register_1_addr] = registers[register_1_addr] - registers[register_2_addr];
                 
-                registers[0] += 3;
+                *pc += 3;
                 break;
             }
             case HALT:
@@ -147,7 +139,7 @@ void print_memory(uint8_t memory[], unsigned int size) {
     }
     printf("\n");
     for (int i = 0; i < size; i++) {
-        printf("%02x ",memory[i]);
+        printf("%02x ", memory[i]);
     }
     printf("\n");
     printf("INSTRUCTIONS ---------------------------^ OUT-^ IN-1^ IN-2^\n");
@@ -155,9 +147,7 @@ void print_memory(uint8_t memory[], unsigned int size) {
 
 void load_program(uint8_t memory[], uint8_t program[], unsigned int size) {
     printf("> Loading program to memory...\n");
-    for (int i = 0; i < size; i++) {
-        memory[i] = program[i];
-    }
+    memcpy(memory, program, size);
     printf("> Program Loaded!\n");
 }
 
