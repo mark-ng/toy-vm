@@ -179,6 +179,26 @@ int main() {
         assert(memory[OUTPUT_1] == expected[i] && memory[OUTPUT_1 + 1] == 0x00);
         printf("i = %d ok\n", i);
     }
+
+    // -300 + -200 = -500
+    uint8_t program_8[MEMORY_SIZE] = {
+        LOAD, REGISTER_A, INPUT_1,      // 0x00: load A 0x10
+        LOAD, REGISTER_B, INPUT_2,      // 0x03: load B 0x12
+        ADD, REGISTER_A, REGISTER_B,    // 0x06: add A B
+        STORE, REGISTER_A, OUTPUT_1,    // 0x09: store A 0x0e
+        HALT,                           // 0x0c: halt
+    };
+    program_8[INPUT_1] = 0xD4;
+    program_8[INPUT_1 + 1] = 0xFE;
+    program_8[INPUT_2] = 0x38;
+    program_8[INPUT_2 + 1] = 0xFF;
+
+    load_program(memory, program_8, MEMORY_SIZE);
+    compute(memory, MEMORY_SIZE);
+    printf("> Testing -300 + -200 = -500\n");
+    print_memory(memory, MEMORY_SIZE);
+    assert(memory[OUTPUT_1] == 0x0C && memory[OUTPUT_1 + 1] == 0xFE);
+    
     
     printf("OK\n");
 }
@@ -192,9 +212,9 @@ void compute(uint8_t memory[], unsigned int size) {
     INSTRUCTIONS ---------------------------------------------------------------------------------------------------------------------^ OUT-^ IN-1^ IN-2^
     */
 
-    uint16_t registers[5] = { 0x00, 0x00, 0x00, 0x00, 0x00 }; // PC, R1, and R2, R3, R4
+    int16_t registers[5] = { 0x00, 0x00, 0x00, 0x00, 0x00 }; // PC, R1, and R2, R3, R4
 
-    uint16_t* pc = &registers[0];
+    int16_t* pc = &registers[0];
 
     while (true) {
         uint8_t op = memory[*pc];
@@ -204,7 +224,7 @@ void compute(uint8_t memory[], unsigned int size) {
                 uint8_t memory_input_addr = memory[*pc + 2]; // input address to get value
 
                 // Input is 2 byte litte endian
-                registers[register_addr] = memory[memory_input_addr + 1] << 8 | memory[memory_input_addr];
+                registers[register_addr] = (int16_t) (memory[memory_input_addr + 1] << 8 | memory[memory_input_addr]);
 
                 *pc += 3;
                 break;
@@ -224,7 +244,7 @@ void compute(uint8_t memory[], unsigned int size) {
                 uint8_t register_1_addr = memory[*pc + 1];
                 uint8_t register_2_addr = memory[*pc + 2];
 
-                registers[register_1_addr] = registers[register_1_addr] + registers[register_2_addr];
+                registers[register_1_addr] = (int16_t) (registers[register_1_addr] + registers[register_2_addr]);
 
                 *pc += 3;
                 break;
@@ -233,7 +253,7 @@ void compute(uint8_t memory[], unsigned int size) {
                 uint8_t register_1_addr = memory[*pc + 1];
                 uint8_t register_2_addr = memory[*pc + 2];
 
-                registers[register_1_addr] = registers[register_1_addr] - registers[register_2_addr];
+                registers[register_1_addr] = (int16_t) (registers[register_1_addr] - registers[register_2_addr]);
                 
                 *pc += 3;
                 break;
