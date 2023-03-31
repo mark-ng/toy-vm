@@ -11,6 +11,8 @@ void load_program(uint8_t memory[], uint8_t program[], unsigned int size);
 // Virtual machine cpu simulation
 void compute(uint8_t memory[], unsigned int size);
 
+int16_t little_endian_to_int16(uint8_t low_order_byte, uint8_t high_order_byte);
+
 // Op codes
 #define LOAD 0x01
 #define STORE 0x02
@@ -55,7 +57,7 @@ int main() {
     load_program(memory, program_1, MEMORY_SIZE);
     compute(memory, MEMORY_SIZE);
     printf("> Testing 255 + 3 = 258\n");
-    assert(memory[OUTPUT_1] == 2 && memory[OUTPUT_1 + 1] == 1);
+    assert(little_endian_to_int16(memory[OUTPUT_1], memory[OUTPUT_1 + 1]) == 258);
     print_memory(memory, MEMORY_SIZE);
 
     // 256 - 300 = -44
@@ -75,7 +77,7 @@ int main() {
     compute(memory, MEMORY_SIZE);
     printf("> Testing 256 - 300 = -44\n");
     print_memory(memory, MEMORY_SIZE);
-    assert(memory[OUTPUT_1] == 0xD4 && memory[OUTPUT_1 + 1] == 0xFF);
+    assert(little_endian_to_int16(memory[OUTPUT_1], memory[OUTPUT_1 + 1]) == -44);
 
     // 300++ = 301
     uint8_t program_3[MEMORY_SIZE] = {
@@ -90,7 +92,7 @@ int main() {
     load_program(memory, program_3, MEMORY_SIZE);
     compute(memory, MEMORY_SIZE);
     printf("> Testing 300++ = 301\n");
-    assert(memory[OUTPUT_1] == 45 && memory[OUTPUT_1 + 1] == 1);
+    assert(little_endian_to_int16(memory[OUTPUT_1], memory[OUTPUT_1 + 1]) == 301);
     print_memory(memory, MEMORY_SIZE);
 
     // 300-- = 299
@@ -106,7 +108,7 @@ int main() {
     load_program(memory, program_4, MEMORY_SIZE);
     compute(memory, MEMORY_SIZE);
     printf("> Testing 300-- = 299\n");
-    assert(memory[OUTPUT_1] == 43 && memory[OUTPUT_1 + 1] == 1);
+    assert(little_endian_to_int16(memory[OUTPUT_1], memory[OUTPUT_1 + 1]) == 299);
     print_memory(memory, MEMORY_SIZE);
 
     // skip some code (do nothing)
@@ -124,7 +126,7 @@ int main() {
     compute(memory, MEMORY_SIZE);
     printf("> Testing JUMP\n");
     print_memory(memory, MEMORY_SIZE);
-    assert(memory[OUTPUT_1] == 0x00 && memory[OUTPUT_1 + 1] == 0x00);
+    assert(little_endian_to_int16(memory[OUTPUT_1], memory[OUTPUT_1 + 1]) == 0);
     print_memory(memory, MEMORY_SIZE);
 
     // sum from 0 to 10
@@ -142,7 +144,7 @@ int main() {
     load_program(memory, program_6, MEMORY_SIZE);
     compute(memory, MEMORY_SIZE);
     printf("> Testing JUMP\n");
-    assert(memory[OUTPUT_1] == 0x37 && memory[OUTPUT_1 + 1] == 0x00);
+    assert(little_endian_to_int16(memory[OUTPUT_1], memory[OUTPUT_1 + 1]) == 55);
     print_memory(memory, MEMORY_SIZE);
 
     // Fibonacci
@@ -175,7 +177,7 @@ int main() {
         load_program(memory, program_7, MEMORY_SIZE);
         compute(memory, MEMORY_SIZE);
         printf("> Testing Fibonacci\n");
-        assert(memory[OUTPUT_1] == expected[i] && memory[OUTPUT_1 + 1] == 0x00);
+        assert(little_endian_to_int16(memory[OUTPUT_1], memory[OUTPUT_1 + 1]) == expected[i]);
         printf("i = %d ok\n", i);
     }
 
@@ -195,9 +197,8 @@ int main() {
     load_program(memory, program_8, MEMORY_SIZE);
     compute(memory, MEMORY_SIZE);
     printf("> Testing -300 + -200 = -500\n");
+    assert(little_endian_to_int16(memory[OUTPUT_1], memory[OUTPUT_1 + 1]) == -500);
     print_memory(memory, MEMORY_SIZE);
-    assert(memory[OUTPUT_1] == 0x0C && memory[OUTPUT_1 + 1] == 0xFE);
-    
     
     printf("OK\n");
 }
@@ -223,7 +224,7 @@ void compute(uint8_t memory[], unsigned int size) {
                 uint8_t memory_input_addr = memory[*pc + 2]; // input address to get value
 
                 // Input is 2 byte litte endian
-                registers[register_addr] = (int16_t) (memory[memory_input_addr + 1] << 8 | memory[memory_input_addr]);
+                registers[register_addr] = little_endian_to_int16(memory[memory_input_addr], memory[memory_input_addr + 1]);
 
                 *pc += 3;
                 break;
@@ -332,5 +333,9 @@ void load_program(uint8_t memory[], uint8_t program[], unsigned int size) {
     printf("> Loading program to memory...\n");
     memcpy(memory, program, size);
     printf("> Program Loaded!\n");
+}
+
+int16_t little_endian_to_int16(uint8_t low_order_byte, uint8_t high_order_byte) {
+    return (int16_t) (high_order_byte << 8 | low_order_byte);
 }
 
