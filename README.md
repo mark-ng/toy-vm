@@ -12,7 +12,7 @@
 - Two 2-byte little endian Inputs
 - One 2-byte little endian Output
 - Support negative numbers using 16-bit two's complement
-- Can calulate Fibonacci numbers
+- Can calculate Fibonacci numbers
 
 ## dev
 
