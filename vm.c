@@ -58,8 +58,7 @@ int main() {
     assert(memory[OUTPUT_1] == 2 && memory[OUTPUT_1 + 1] == 1);
     print_memory(memory, MEMORY_SIZE);
 
-    // TODO: Test negative number
-    // 256 - 3 = 253
+    // 256 - 300 = -44
     uint8_t program_2[MEMORY_SIZE] = {
         LOAD, REGISTER_A, INPUT_1,      // 0x00: load A 0x10
         LOAD, REGISTER_B, INPUT_2,      // 0x03: load B 0x12
@@ -69,14 +68,14 @@ int main() {
     };
     program_2[INPUT_1] = 0x00;
     program_2[INPUT_1 + 1] = 0x01;
-    program_2[INPUT_2] = 0x03;
-    program_2[INPUT_2 + 1] = 0x00;
+    program_2[INPUT_2] = 0x2C;
+    program_2[INPUT_2 + 1] = 0x01;
 
     load_program(memory, program_2, MEMORY_SIZE);
     compute(memory, MEMORY_SIZE);
-    printf("> Testing 256 - 3 = 253\n");
-    assert(memory[OUTPUT_1] == 253 && memory[OUTPUT_1 + 1] == 0);
+    printf("> Testing 256 - 300 = -44\n");
     print_memory(memory, MEMORY_SIZE);
+    assert(memory[OUTPUT_1] == 0xD4 && memory[OUTPUT_1 + 1] == 0xFF);
 
     // 300++ = 301
     uint8_t program_3[MEMORY_SIZE] = {
