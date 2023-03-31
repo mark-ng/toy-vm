@@ -24,7 +24,7 @@ void compute(uint8_t memory[], unsigned int size);
 #define HALT 0xFF
 
 // Use offset to calculate the memory address of input, output for extendbility of memory
-#define MEMORY_SIZE 50
+#define MEMORY_SIZE 60
 #define REGISTER_A 0x01
 #define REGISTER_B 0x02
 #define REGISTER_C 0x03
@@ -128,6 +128,7 @@ int main() {
     assert(memory[OUTPUT_1] == 0x00 && memory[OUTPUT_1 + 1] == 0x00);
     print_memory(memory, MEMORY_SIZE);
 
+    // sum from 0 to 10
     uint8_t program_6[MEMORY_SIZE] = {
         LOAD, REGISTER_A, INPUT_1,               // 0x00: load A 0x10
         ADD, REGISTER_B, REGISTER_A,             // 0x03: add B A
@@ -145,6 +146,40 @@ int main() {
     assert(memory[OUTPUT_1] == 0x37 && memory[OUTPUT_1 + 1] == 0x00);
     print_memory(memory, MEMORY_SIZE);
 
+    // Fibonacci
+    uint8_t program_7[MEMORY_SIZE] = {
+        LOAD, REGISTER_A, INPUT_1,                            // 0x00
+        BEQ, REGISTER_A, REGISTER_B, 0x2b,                    // 0x03
+        ADDI, REGISTER_C,                                     // 0x07
+        BEQ, REGISTER_A, REGISTER_C, 0x2f,                    // 0x09
+        SUBI, REGISTER_A,                                     // 0x0d
+        ADD, REGISTER_D, REGISTER_B,                          // 0x0f
+        ADD, REGISTER_D, REGISTER_C,                          // 0x12
+        STORE, REGISTER_C, OUTPUT_1,                          // 0x15
+        LOAD, REGISTER_B, OUTPUT_1,                           // 0x18
+        STORE, REGISTER_D, OUTPUT_1,                          // 0x1b
+        LOAD, REGISTER_D, INPUT_2,                            // 0x1e
+        LOAD, REGISTER_C, OUTPUT_1,                           // 0x21
+        SUBI, REGISTER_A,                                     // 0x24
+        BEQZ, 0x2a,                                           // 0x26
+        JUMP, 0x0f,                                           // 0x28
+        HALT,                                                 // 0x2a
+        STORE, REGISTER_A, OUTPUT_1,                          // 0x2b
+        HALT,                                                 // 0x2e
+        STORE, REGISTER_C,OUTPUT_1,                           // 0x2f
+        HALT,                                                 // 0x32
+    };
+    
+    uint16_t expected[11] = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55};
+    for (int i = 1; i <= 10; i++) {
+        program_7[INPUT_1] = i;
+        load_program(memory, program_7, MEMORY_SIZE);
+        compute(memory, MEMORY_SIZE);
+        printf("> Testing Fibonacci\n");
+        assert(memory[OUTPUT_1] == expected[i] && memory[OUTPUT_1 + 1] == 0x00);
+        printf("i = %d ok\n", i);
+    }
+    
     printf("OK\n");
 }
 
@@ -255,7 +290,10 @@ void compute(uint8_t memory[], unsigned int size) {
 }
 
 void print_memory(uint8_t memory[], unsigned int size) {
-    printf("-----------------------------------------------------------------------memory------------------------------------------------------------------------\n");
+    for (int i = 0; i < size * 3 - 3; i++) {
+        printf("-");
+    }
+    printf("--\n");
     for (int i = 0; i < size; i++) {
         printf("%02x ", i);
     }
@@ -264,7 +302,11 @@ void print_memory(uint8_t memory[], unsigned int size) {
         printf("%02x ", memory[i]);
     }
     printf("\n");
-    printf("INSTRUCTIONS ---------------------------------------------------------------------------------------------------------------------^ OUT-^ IN-1^ IN-2^\n");
+    printf("INSTRUCTIONS ");
+    for (int i = 0; i < size * 3 - 1 - 13 - 19; i++) {
+        printf("-");
+    }
+    printf("^ OUT-^ IN-1^ IN-2^\n");
 }
 
 void load_program(uint8_t memory[], uint8_t program[], unsigned int size) {
