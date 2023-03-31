@@ -13,33 +13,35 @@ void compute(uint8_t memory[], unsigned int size);
 
 int16_t little_endian_to_int16(uint8_t low_order_byte, uint8_t high_order_byte);
 
-// Op codes
-#define LOAD 0x01
-#define STORE 0x02
-#define ADD 0x03
-#define SUB 0x04
-#define ADDI 0x05
-#define SUBI 0x06
-#define JUMP 0x07
-#define BEQ 0x08  // Branch if two register are equal
-#define BEQZ 0x09 // Branch if register A equal 0
-#define HALT 0xFF
-
-// Use offset to calculate the memory address of input, output for extendbility of memory
-#define MEMORY_SIZE 60
+// Virtual machine spec
+#define MEMORY_SIZE 60 
+#define REGISTER_NUM 5 // 1 for the "program counter" and remaining are general purpose register
 #define REGISTER_A 0x01
 #define REGISTER_B 0x02
 #define REGISTER_C 0x03
 #define REGISTER_D 0x04
+
+// I/O (2-byte little endian) 
+// Use offset to calculate the memory address of input, output for extendbility of memory
 #define INPUT_1 (MEMORY_SIZE - 4)
 #define INPUT_2 (MEMORY_SIZE - 2)
 #define OUTPUT_1 (MEMORY_SIZE - 6)
 
+// Op codes
+#define LOAD 0x01   // LOAD reg (addr) : Load value from (addr) to reg
+#define STORE 0x02  // STORE reg (addr) : Store value from reg to (addr)
+#define ADD 0x03    // ADD reg1 reg2 : Set reg1 to reg1 + reg2 
+#define SUB 0x04    // SUB reg1 reg2 : Set reg1 to reg1 - reg2
+#define ADDI 0x05   // ADDI reg : Set reg1 = reg1 + 1
+#define SUBI 0x06   // SUBI reg : Set reg1 = reg1 - 1
+#define JUMP 0x07   // JUMP (addr) : JUMP to (addr)
+#define BEQ 0x08    // BEQ reg1 reg2 (addr) : Jump to (addr) if reg1 == reg2
+#define BEQZ 0x09   // BEQZ reg (addr) : Jump to (addr) if reg == 0
+#define HALT 0xFF   // Halt : End the program
+
 int main() {
     // Simulate a memory with replacable value
     uint8_t memory[MEMORY_SIZE];
-
-    memset(memory, 0, MEMORY_SIZE);
 
     // 255 + 3 = 258
     uint8_t program_1[MEMORY_SIZE] = {
@@ -212,7 +214,7 @@ void compute(uint8_t memory[], unsigned int size) {
     INSTRUCTIONS ---------------------------------------------------------------------------------------------------------------------------------------------------^ OUT-^ IN-1^ IN-2^
     */
 
-    int16_t registers[5] = { 0x00, 0x00, 0x00, 0x00, 0x00 }; // PC, R1, and R2, R3, R4
+    int16_t registers[REGISTER_NUM] = { 0x00, 0x00, 0x00, 0x00, 0x00 }; // PC, R1, and R2, R3, R4
 
     int16_t* pc = &registers[0];
 
@@ -330,6 +332,7 @@ void print_memory(uint8_t memory[], unsigned int size) {
 }
 
 void load_program(uint8_t memory[], uint8_t program[], unsigned int size) {
+    memset(memory, 0, MEMORY_SIZE);
     printf("> Loading program to memory...\n");
     memcpy(memory, program, size);
     printf("> Program Loaded!\n");
